@@ -5,15 +5,13 @@ import mysql.connector
 import os
 import json
 import logging
-from datetime import datetime, timezone
-import gspread
+from datetime import datetime, timezone, timedelta  # <-- 1. FIXED THIS IMPORT
 
 # --- Basic Logging and App Setup ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 app = FastAPI(title="Madox DB Proxy")
 
-# --- All previous functions remain the same ---
-# (Google Sheets, Locks, Security, DB Connection, etc.)
+# --- Google Sheets Logging (in the background) ---
 GOOGLE_CREDS_PATH = '/etc/secrets/google_credentials.json'
 SPREADSHEET_NAME = 'API Action Logs'
 
@@ -28,13 +26,18 @@ def log_to_google_sheet(user_id: str, query: str, params: list):
     client = get_gspread_client()
     if not client: return
     try:
-        jst = timezone(offset=datetime.timedelta(hours=9))
+        # Get the current time in JST (UTC+9)
+        jst = timezone(offset=timedelta(hours=9))  # <-- 2. FIXED THIS LINE
         timestamp = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S")
+
         sheet = client.open(SPREADSHEET_NAME).sheet1
-        sheet.append_row([timestamp, user_id, query, json.dumps(params)])
+        row_to_insert = [timestamp, user_id, query, json.dumps(params)]
+        sheet.append_row(row_to_insert)
+        logging.info("Successfully logged action to Google Sheet.")
     except Exception as e:
         logging.error(f"Failed to write log to Google Sheet: {e}")
 
+# --- All other code remains the same ---
 user_locks = {}
 dict_lock = Lock()
 def get_user_lock(user_id: str):
@@ -46,7 +49,6 @@ def get_user_lock(user_id: str):
 API_KEY = os.getenv("API_KEY")
 def verify_api_key(request: Request):
     sent_key = request.headers.get("x-api-key")
-    # Make the comparison more robust by stripping whitespace
     if not API_KEY or not sent_key or sent_key.strip() != API_KEY.strip():
         raise HTTPException(status_code=403, detail="Forbidden: Invalid or missing API Key")
 
@@ -66,7 +68,6 @@ class SQLRequest(BaseModel):
 
 @app.post("/query", dependencies=[Depends(verify_api_key)])
 async def run_query(data: SQLRequest, background_tasks: BackgroundTasks):
-    # This function remains the same
     if data.query.strip().lower().startswith("delete"):
         raise HTTPException(status_code=403, detail="DELETE operations are blocked.")
     user_lock = get_user_lock(data.user_id)
