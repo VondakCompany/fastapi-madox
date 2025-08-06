@@ -1,15 +1,19 @@
-from fastapi import FastAPI, Request, HTTPException, Depends, BackgroundTasks
-from pydantic import BaseModel
-from threading import Lock
-import mysql.connector
 import os
 import json
 import logging
+from threading import Lock
 from datetime import datetime, timezone, timedelta
+
+# FastAPI and Pydantic
+from fastapi import FastAPI, Request, HTTPException, Depends, BackgroundTasks
+from pydantic import BaseModel
+
+# Database and Google Sheets libraries
+import mysql.connector
 import gspread
 
 # --- Basic Logging and App Setup ---
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 app = FastAPI(title="Madox DB Proxy")
 
 # --- Google Sheets Logging (in the background) ---
@@ -24,19 +28,31 @@ def get_gspread_client():
         return None
 
 def log_to_google_sheet(user_id: str, query: str, params: list):
+    """Appends a new row to the designated Google Sheet with detailed error logging."""
     client = get_gspread_client()
-    if not client: return
-    try:
-        # Get the current time in JST (UTC+9)
-        jst = timezone(offset=timedelta(hours=9))  # <-- 2. FIXED THIS LINE
-        timestamp = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S")
+    if not client:
+        return
 
+    try:
+        logging.info("Attempting to open Google Sheet...")
         sheet = client.open(SPREADSHEET_NAME).sheet1
+        logging.info("Google Sheet opened successfully. Preparing to append row...")
+
+        jst = timezone(offset=timedelta(hours=9))
+        timestamp = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S")
         row_to_insert = [timestamp, user_id, query, json.dumps(params)]
+
         sheet.append_row(row_to_insert)
-        logging.info("Successfully logged action to Google Sheet.")
+        logging.info("Successfully wrote log to Google Sheet.")
+
     except Exception as e:
-        logging.error(f"Failed to write log to Google Sheet: {e}")
+        # --- NEW DETAILED ERROR LOGGING ---
+        logging.error("--- FAILED TO WRITE LOG TO GOOGLE SHEET ---")
+        logging.error(f"Exception Type: {type(e)}")
+        logging.error(f"Exception Representation (repr): {repr(e)}")
+        logging.error(f"Exception String (str): {e}")
+        logging.error("-----------------------------------------")
+
 
 # --- All other code remains the same ---
 user_locks = {}
