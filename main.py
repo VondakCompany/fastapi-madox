@@ -5,7 +5,8 @@ import mysql.connector
 import os
 import json
 import logging
-from datetime import datetime, timezone, timedelta  # <-- 1. FIXED THIS IMPORT
+from datetime import datetime, timezone, timedelta
+import gspread
 
 # --- Basic Logging and App Setup ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
