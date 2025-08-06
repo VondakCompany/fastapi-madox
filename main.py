@@ -108,3 +108,8 @@ async def run_query(data: SQLRequest, background_tasks: BackgroundTasks):
             cursor.close()
             conn.close()
         user_lock.release()
+
+@app.get("/health")
+async def health_check():
+    """A simple endpoint for uptime monitoring that doesn't require a key."""
+    return {"status": "ok"}
