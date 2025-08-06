@@ -18,7 +18,7 @@ app = FastAPI(title="Madox DB Proxy")
 
 # --- Google Sheets Logging (in the background) ---
 GOOGLE_CREDS_PATH = '/etc/secrets/google_credentials.json'
-SPREADSHEET_NAME = 'API Action Logs'
+SPREADSHEET_NAME = 'MADOX-API-log'
 
 def get_gspread_client():
     try:
