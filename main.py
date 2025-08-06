@@ -90,26 +90,3 @@ async def run_query(data: SQLRequest, background_tasks: BackgroundTasks):
             cursor.close()
             conn.close()
         user_lock.release()
-
-# ***************************************************************
-# *** NEW DEBUGGING ENDPOINT                    ***
-# ***************************************************************
-@app.get("/debug-key-info")
-async def debug_key_info():
-    """
-    Safely returns information about the API_KEY loaded on the server.
-    This does NOT require an API key to access.
-    """
-    server_api_key = os.getenv("API_KEY")
-
-    if server_api_key:
-        return {
-            "status": "API_KEY environment variable is SET on the server.",
-            "key_length": len(server_api_key),
-            "first_3_chars": server_api_key[:3],
-            "last_3_chars": server_api_key[-3:]
-        }
-    else:
-        return {
-            "status": "ERROR: API_KEY environment variable is NOT SET on the server."
-        }
