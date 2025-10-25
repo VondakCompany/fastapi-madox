@@ -1,0 +1,5 @@
+{
+  "get_user_by_id": "SELECT * FROM users WHERE id=%s",
+  "update_user_email": "UPDATE users SET email=%s WHERE id=%s",
+  "insert_order": "INSERT INTO orders (user_id, product_id, quantity) VALUES (%s, %s, %s)"
+}
