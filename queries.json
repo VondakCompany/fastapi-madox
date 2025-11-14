@@ -1,5 +1,5 @@
 {
-  "get_user_by_id": "SELECT * FROM users WHERE id=%s",
-  "update_user_email": "UPDATE users SET email=%s WHERE id=%s",
-  "insert_order": "INSERT INTO orders (user_id, product_id, quantity) VALUES (%s, %s, %s)"
+  "001": "SELECT id, password_hash, status, max_status FROM users WHERE username=%s FOR UPDATE",
+  "002": "UPDATE users SET status = status + 1 WHERE id=%s AND status < max_status",
+  "003": "UPDATE users SET status = status - 1 WHERE id=%s AND status > 0"
 }
